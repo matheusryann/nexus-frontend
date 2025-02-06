@@ -1,0 +1,24 @@
+.header {
+  grid-area: header;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px 60px;
+  background: #000;
+  color: #69ffc8;
+  max-width: 100%;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  margin: 10px 20px;
+  cursor: pointer;
+}
+
+.icon {
+  cursor: pointer;
+}
+
+
+

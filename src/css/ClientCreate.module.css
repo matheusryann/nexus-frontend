@@ -1,0 +1,148 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 60px 80px;
+}
+
+
+.subtitle {
+  font-size: 24px;
+  line-height: 32px;
+  color: #2d2d2d;
+  font-family: Poppins, Arial, sans-serif;
+  font-weight: 600;
+  position: relative;
+  padding: 10px 30px;
+  display: flex;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.subtitle::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-color: #69ffc8;
+  position: absolute;
+  border-radius: 2px;
+  margin-left: -26px;
+}
+
+.form {
+  display: grid;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 120px;
+  position: relative;
+}
+
+.form label {
+  font-size: 18px;
+  font-family: Poppins, Arial, sans-serif;
+  font-weight:400;
+  color: #2d2d2d;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form input { 
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.form input:focus,
+.form select:focus {
+  outline: none; /* Remove o contorno padrão do navegador */
+  border: 1px solid #69ffc8; /* Borda verde suave */
+  box-shadow: 0 0 8px rgba(105, 255, 200, 0.1); /* Efeito de brilho ao redor */
+  transition: 0.2s; /* Suaviza a transição */
+}
+
+.inputRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputSize {
+  width: 300px;
+  
+}
+
+.inputSizeOne {
+  width: 600px;
+}
+
+
+.form select {
+  width: 300px; /* Ocupa todo o espaço disponível na célula */
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+select {
+  color: #a0a0a0; /* Cor padrão do placeholder */
+  font-style: normal; /* Texto itálico */
+}
+
+select option {
+  color: #000; /* Texto normal preto */
+  font-style: normal; /* Remove o itálico */
+}
+
+
+select option[value=""] {
+  color: #a0a0a0; /* Cor cinza para representar o placeholder */
+  font-style: italic; /* Estilo opcional */
+}
+
+select {
+  appearance: none; /* Remove a seta padrão */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 30px; /* Espaço para a seta */
+}
+
+button {
+  display: inline-block;
+  max-width: max-content;
+  padding: 20px 36px;
+  font-size: 16px;
+  text-transform: uppercase;
+  font-family: Poppins, Arial, sans-serif;
+  font-weight: 400;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #0a0a0a;
+  margin-top: 16px;
+}
+
+button:hover {
+  background-color: #212121;
+}
+
+.form span {
+  color: rgba(255, 0, 0, 1);
+  font-size: 12px;
+  font-weight: initial;
+  position: absolute;
+  margin-top: 80px;
+}
+
+.editMode {
+  background-color: #f5f5f5;
+}

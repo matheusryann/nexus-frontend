@@ -1,0 +1,13 @@
+.footer {
+  grid-area: footer;
+  background: #000000;
+  color: #fff;
+  padding: 30px;
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.175rem;
+  line-height: 32px;
+  width:  100%;
+  z-index: 1;
+  position:  absolute;
+}

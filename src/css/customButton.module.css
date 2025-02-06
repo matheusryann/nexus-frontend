@@ -1,0 +1,19 @@
+.customButton {
+  display: inline-block;
+  max-width: max-content;
+  padding: 20px 36px;
+  font-size: 16px;
+  text-transform: uppercase;
+  font-family: Poppins, Arial, sans-serif;
+  font-weight: 400;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #0a0a0a;
+  margin-top: 16px;
+}
+
+button:hover {
+  background-color: #212121;
+}

@@ -1,0 +1,120 @@
+.sidebar { /* Fixa a posição durante o scroll */
+  grid-area: sidebar;
+  top: 0;
+  left: 0; /* Começa do topo da página */
+  height: 100vh; /* Altura total da janela */
+  overflow-y: auto; /* Rolagem vertical */
+  width: 250px; /* Define a largura fixa */
+  background-color: #0a0a0a;
+  font-family: 'Roboto', sans-serif;
+  color: #69ffc8;
+  padding: 10px;
+  position: sticky;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #121212;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #69ffc8;
+  border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: #57d6a8;
+}
+
+.menuContainer {
+  width: 100%;
+  border-bottom: 1px solid #1a1a1a;
+  margin-top: 2rem;
+  padding: 10px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  gap: 30px;
+  margin-bottom: 10px;
+}
+
+.menuContainer:hover {
+  color: #56dbaa;
+}
+
+
+.menuContainer:last-child {
+  border-bottom: none;
+}
+
+.menuIcon {
+  width: 32px;
+  height: 32px;
+  margin-left: 8px;
+}
+
+.menuText {
+  font-size: 18px;
+  flex-grow: 1;
+}
+
+.arrowIcon {
+  transition: transform 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.arrowIcon.open {
+  transform: rotate(180deg);
+}
+
+/* Submenu */
+.submenu {
+  gap: 20px;
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  position: relative;
+}
+
+.submenuItem {
+  padding: 20px 20px;
+  text-decoration: none;
+  color: #fff;
+  font-size: 16px;
+  position: relative;
+  transition: color 0.3s;
+  display: block;
+  border-bottom: 1px solid #1a1a1a; /* Apenas no tamanho do texto */
+}
+
+.submenuItem:last-child {
+  border-bottom: none;
+}
+
+/* Ativo - Linha abaixo do texto */
+.submenuItem.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%; /* Tamanho do texto */
+  height: 2px;
+  background-color: #69ffc8; /* Linha destacada */
+}
+
+
+.submenuItem:hover {
+  color: #56dbaa;
+}

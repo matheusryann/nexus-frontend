@@ -1,0 +1,21 @@
+{
+  "name": "nexus-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "antd": "^5.23.0",
+    "bootstrap": "^5.3.3",
+    "react": "^18.0.0",
+    "react-bootstrap": "^2.10.7",
+    "react-dom": "^18.0.0",
+    "react-icons": "^5.4.0",
+    "react-router-dom": "^6.0.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0"
+  }
+}
