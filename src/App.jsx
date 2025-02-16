@@ -21,6 +21,9 @@ import TarrifVisualization from './pages/tarifas/TarrifVisualization';
 import TarrifEdit from './pages/tarifas/TariffEdit';
 import EnergyBillVisualization from './pages/invoice/EnergyBillVisualization';
 import EnergyBillEdit from './pages/invoice/EnergyBillEdit';
+import ItemFaturaCreate from './pages/invoice/ItemFaturaCreate';
+import ItemFaturaVisualization from './pages/invoice/ItemFaturaVisualization';
+import ItemFaturaEdit from './pages/invoice/ItemFaturaEdit';
 
 function App() {
   return (
@@ -55,6 +58,15 @@ function App() {
               element={<EnergyBillVisualization />}
             />
             <Route path="/faturas/editar/:id" element={<EnergyBillEdit />} />
+            <Route
+              path="/faturas/cadastrar-item-fatura"
+              element={<ItemFaturaCreate />}
+            />
+            <Route
+              path="/faturas/visualizar-item-fatura"
+              element={<ItemFaturaVisualization />}
+            />
+            <Route path="/faturas/editar/:id" element={<ItemFaturaEdit />} />
             <Route
               path="/tarifas/cadastrar-distribuidora"
               element={<DistribuidoraCreate />}
