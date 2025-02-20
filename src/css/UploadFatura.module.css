@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 60px 80px;
+}
+
+.uploadBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: 0.3s;
+  border: 2px dashed #69ffc8;
+  padding: 20px;
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  position: relative;
+}
+
+.uploadBoxText {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+}
+
+.uploadIcon {
+  margin-left: auto;
+}
+
+
+
+.uploadBox.active {
+  background-color: rgba(105, 255, 200, 0.1);
+}
+
+.uploadBox:hover {
+  background-color: rgba(105, 255, 200, 0.2);
+}
+
+.hiddenInput {
+  display: none;
+}

@@ -27,6 +27,7 @@ import ItemFaturaEdit from './pages/invoice/ItemFaturaEdit';
 import TributoCreate from './pages/invoice/TributoCreate';
 import TributoVisualization from './pages/invoice/TributoVisualization';
 import TributoEdit from './pages/invoice/TributoEdit';
+import UploadFatura from './pages/history/UploadFatura';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
               path="/historico/visualizar-historico"
               element={<HistoricoVisualization />}
             />
+            <Route path="/historico/upload-fatura" element={<UploadFatura />} />
             <Route path="/historicos/editar/:id" element={<HistoryEdit />} />
             <Route
               path="/faturas/cadastrar-conta-energia"

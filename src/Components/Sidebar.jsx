@@ -66,6 +66,11 @@ const Sidebar = () => {
           label: 'Visualizar Histórico',
           link: '/historico/visualizar-historico',
         },
+        {
+          id: 'uploadFatura',
+          label: 'Upload de Fatura',
+          link: '/historico/upload-fatura',
+        },
       ],
     },
     {
