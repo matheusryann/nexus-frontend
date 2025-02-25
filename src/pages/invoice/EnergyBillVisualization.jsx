@@ -206,7 +206,6 @@ const EnergyBillVisualization = () => {
                   <input
                     type="radio"
                     name="contaSelecionada"
-                    className={styles.radioButton}
                     checked={contaSelecionada?.id === conta.id}
                     onChange={() =>
                       setContaSelecionada(
@@ -233,6 +232,12 @@ const EnergyBillVisualization = () => {
         </tbody>
       </table>
 
+      <DetailsModal
+        show={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title="Detalhes da Conta de Energia"
+        data={contaInfo}
+      />
       <CustomModal
         show={showModal}
         onClose={handleCloseModal}

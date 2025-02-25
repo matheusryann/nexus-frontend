@@ -81,7 +81,7 @@ const SimulacaoConsumoAnual = () => {
         const mensagem = response.data.mensagem;
 
         // Capturar os valores corretamente usando regex
-        const valores = mensagem.match(/R$ ([\d,.\d]+)/g);
+        const valores = mensagem.match(/R\$ ([\d,.\d]+)/g);
 
         if (valores && valores.length >= 2) {
           // Extrair os valores e substituir apenas a vírgula decimal (se houver)
