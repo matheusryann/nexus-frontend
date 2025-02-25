@@ -114,13 +114,13 @@ const Sidebar = () => {
       id: 'simulacoes',
       title: 'Simulações',
       icon: simulacoesIcon,
-      submenus: [],
-    },
-    {
-      id: 'relatorios',
-      title: 'Relatórios',
-      icon: relatoriosIcon,
-      submenus: [],
+      submenus: [
+        {
+          id: 'simulacaoConsumoAnual',
+          label: 'Melhor Consumo Anual',
+          link: '/simulacao/consumo-anual',
+        },
+      ],
     },
     {
       id: 'tarifas',

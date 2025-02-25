@@ -4,8 +4,9 @@ import CustomButton from '../../Components/CustomButton';
 import CustomModal from '../../Components/Modal';
 import styles from '../../css/Simulacao.module.css';
 
-const SimulacaoConsumoAnual = ({ clientId }) => {
+const SimulacaoConsumoAnual = () => {
   const [contas, setContas] = useState([]); // Lista de contas de energia
+  const [clientes, setClientes] = useState([]); // Lista de clientes
   const [contaSelecionada, setContaSelecionada] = useState(''); // Conta escolhida pelo usuário
   const [resultado, setResultado] = useState(null); // Dados do resultado
   const [isLoading, setIsLoading] = useState(false); // Estado de carregamento
@@ -15,31 +16,48 @@ const SimulacaoConsumoAnual = ({ clientId }) => {
   const [valorVerde, setValorVerde] = useState(0);
   const [valorAzul, setValorAzul] = useState(0);
 
-  // Busca as contas de energia ao carregar a página
+  // Buscar contas de energia e clientes ao carregar a página
   useEffect(() => {
-    const fetchContas = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(
-          'http://127.0.0.1:8000/api/faturas/contas-energia/',
-        );
+        const [contasResponse, clientesResponse] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
+          axios.get('http://127.0.0.1:8000/api/clientes/clientes/'),
+        ]);
 
-        if (Array.isArray(response.data)) {
-          // Filtra as contas do cliente logado
-          const contasCliente = response.data.filter(
-            (conta) => conta.cliente === clientId,
-          );
-          setContas(contasCliente);
+        if (Array.isArray(contasResponse.data)) {
+          setContas(contasResponse.data);
+        } else {
+          console.error('Erro ao buscar contas:', contasResponse.data);
+          setContas([]);
+        }
+
+        if (Array.isArray(clientesResponse.data)) {
+          setClientes(clientesResponse.data);
+        } else {
+          console.error('Erro ao buscar clientes:', clientesResponse.data);
+          setClientes([]);
         }
       } catch (error) {
-        console.error('Erro ao buscar contas:', error);
+        console.error('Erro ao buscar dados da API:', error);
+        setContas([]);
+        setClientes([]);
       }
     };
 
-    fetchContas();
-  }, [clientId]);
+    fetchData();
+  }, []);
+
+  // Função para obter o nome do cliente pelo ID
+  const getClienteNome = (clienteId) => {
+    const cliente = clientes.find((c) => c.id === clienteId);
+    return cliente ? cliente.nome : 'Cliente Desconhecido';
+  };
 
   // Função para simular os cálculos
-  const handleSimulacao = async () => {
+  const handleSimulacao = async (e) => {
+    e.preventDefault(); // Evita comportamento inesperado
+
     if (!contaSelecionada) {
       setModalTitle('Erro');
       setModalMessage(
@@ -72,9 +90,11 @@ const SimulacaoConsumoAnual = ({ clientId }) => {
           );
 
           setResultado(response.data.mensagem);
-
-          // Inicia a animação dos valores subindo até o final
           animarValores(verde, azul);
+        } else {
+          setModalTitle('Erro');
+          setModalMessage('Não foi possível extrair os valores da resposta.');
+          setIsModalOpen(true);
         }
       } else {
         setModalTitle('Erro');
@@ -119,26 +139,30 @@ const SimulacaoConsumoAnual = ({ clientId }) => {
     <div className={styles.container}>
       <h1 className="titulo">Simulação de Melhor Consumo Anual</h1>
       <p className="description">
-        Escolha uma conta de energia cadastrada e descubra qual modalidade
+        Escolha uma conta de energia cadastrada para descobrir qual modalidade
         tarifária oferece o menor custo anual.
       </p>
 
-      {/* Dropdown para selecionar a conta de energia */}
+      {/* Seleção de Conta de Energia */}
+      <label className={styles.label}>Selecione uma Conta de Energia:</label>
       <select
         className={styles.select}
         value={contaSelecionada}
         onChange={(e) => setContaSelecionada(e.target.value)}
       >
-        <option value="">Selecione uma conta</option>
+        <option value="">Selecione uma Conta</option>
         {contas.map((conta) => (
           <option key={conta.id} value={conta.id}>
-            {`Conta #${conta.id} - ${conta.nome_cliente || 'Desconhecido'}`}
+            {`Conta #${conta.id} - ${getClienteNome(conta.cliente)}`}
           </option>
         ))}
       </select>
 
       {/* Botão para iniciar a simulação */}
-      <CustomButton onClick={handleSimulacao} disabled={isLoading}>
+      <CustomButton
+        onClick={handleSimulacao}
+        disabled={isLoading || !contaSelecionada}
+      >
         {isLoading ? 'Calculando...' : 'CALCULAR MELHOR CONSUMO'}
       </CustomButton>
 
