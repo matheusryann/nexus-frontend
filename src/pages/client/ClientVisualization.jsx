@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import styles from '../../css/ClientVisualization.module.css';
 import {
   FaSearch,
@@ -10,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import DetailsModal from '../../Components/DetailsModal';
+import CustomModal from '../../Components/Modal';
 
 const ClientVisualization = () => {
   const [clientes, setClientes] = useState([]);
@@ -19,40 +21,89 @@ const ClientVisualization = () => {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const clientesPorPagina = 8;
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchClientes = async () => {
-      try {
-        const response = await fetch(
-          'http://127.0.0.1:8000/api/clientes/clientes/',
-        );
-        if (response.ok) {
-          setClientes(await response.json());
-        } else {
-          console.error('Erro ao buscar dados do backend');
-        }
-      } catch (error) {
-        console.error('Erro ao buscar dados:', error);
-      }
-    };
+  // Busca os dados do backend
+  const fetchClientes = async () => {
+    try {
+      const response = await axios.get(
+        'http://127.0.0.1:8000/api/clientes/clientes/',
+      );
+      setClientes(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar os dados da API:', error);
+      setErrorMessage('Erro ao carregar dados. Tente novamente.');
+    }
+  };
 
+  useEffect(() => {
     fetchClientes();
   }, []);
 
-  const clientesFiltrados = clientes.filter((cliente) => {
+  // Função para abrir o modal de detalhes do cliente
+  const openClienteDetails = (cliente) => {
+    setClienteInfo(cliente);
+    setShowDetailsModal(true);
+  };
+
+  // Função para deletar cliente
+  const handleDelete = async () => {
+    if (!clienteSelecionado) return;
+
+    try {
+      await axios.delete(
+        `http://127.0.0.1:8000/api/clientes/clientes/${clienteSelecionado.id}/`,
+      );
+
+      setClientes((prev) =>
+        prev.filter((cliente) => cliente.id !== clienteSelecionado.id),
+      );
+      setModalTitle('Sucesso');
+      setModalMessage('Cliente excluído com sucesso.');
+      setClienteSelecionado(null);
+    } catch (error) {
+      setModalTitle('Erro');
+      setModalMessage('Erro ao excluir o cliente.');
+      console.error('Erro na exclusão:', error);
+    } finally {
+      setShowModal(true);
+    }
+  };
+
+  // Confirmação de exclusão
+  const confirmDelete = () => {
+    setModalTitle('Confirmar Exclusão');
+    setModalMessage('Tem certeza de que deseja excluir este cliente?');
+    setShowModal(true);
+  };
+
+  // Fecha modal e decide ação
+  const handleCloseModal = (confirm) => {
+    setShowModal(false);
+    if (confirm) {
+      handleDelete();
+    }
+  };
+
+  // Filtro e Paginação
+  const clientesFiltrados = clientes?.filter((cliente) => {
     const termo = filtro.toLowerCase();
     return (
-      cliente.id.toString().includes(termo) ||
-      cliente.nome.toLowerCase().includes(termo) ||
-      cliente.cnpj.toLowerCase().includes(termo)
+      cliente?.id?.toString().includes(termo) ||
+      cliente?.nome?.toLowerCase().includes(termo) ||
+      cliente?.cnpj?.toLowerCase().includes(termo)
     );
   });
 
   const totalPaginas = Math.ceil(clientesFiltrados.length / clientesPorPagina);
+  const inicio = (paginaAtual - 1) * clientesPorPagina;
   const clientesPaginados = clientesFiltrados.slice(
-    (paginaAtual - 1) * clientesPorPagina,
-    paginaAtual * clientesPorPagina,
+    inicio,
+    inicio + clientesPorPagina,
   );
 
   const gerarNumerosPaginacao = () => {
@@ -75,38 +126,15 @@ const ClientVisualization = () => {
     return numeros;
   };
 
-  const openClienteDetails = (cliente) => {
-    setClienteInfo(cliente);
-    setShowDetailsModal(true);
-  };
-
-  const handleDelete = async () => {
-    if (!clienteSelecionado) return;
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/clientes/clientes/${clienteSelecionado.id}/`,
-        { method: 'DELETE' },
-      );
-      if (response.ok) {
-        setClientes((prev) =>
-          prev.filter((cliente) => cliente.id !== clienteSelecionado.id),
-        );
-        setClienteSelecionado(null);
-      } else {
-        console.error('Erro ao excluir cliente');
-      }
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
-    }
-  };
-
   return (
     <div className={styles.content}>
       <h1 className="titulo">Clientes</h1>
       <p className="description">
         Visualize todas as informações dos clientes.
       </p>
+
+      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+
       <div className={styles.navigation}>
         <div className={styles.inputWrapper}>
           <FaSearch className={styles.icon} />
@@ -127,11 +155,12 @@ const ClientVisualization = () => {
         <button
           className={styles.actionButton}
           disabled={!clienteSelecionado}
-          onClick={handleDelete}
+          onClick={confirmDelete}
         >
           <FaTrash /> Excluir
         </button>
       </div>
+
       <table className={styles.table}>
         <thead>
           <tr>
@@ -158,6 +187,7 @@ const ClientVisualization = () => {
                   <input
                     type="radio"
                     name="clienteSelecionado"
+                    className={styles.radioButton}
                     checked={clienteSelecionado?.id === cliente.id}
                     onChange={() =>
                       setClienteSelecionado(
@@ -182,32 +212,31 @@ const ClientVisualization = () => {
           )}
         </tbody>
       </table>
+
       <div className={styles.pagination}>
         <button
           className={styles.paginationButton}
-          onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
+          onClick={() => setPaginaAtual(Math.max(paginaAtual - 1, 1))}
           disabled={paginaAtual === 1}
         >
           <FaArrowLeft /> Anterior
         </button>
-        <div className={styles.paginationNumbers}>
-          {gerarNumerosPaginacao().map((numero, index) => (
-            <button
-              key={index}
-              className={`${styles.paginationNumber} ${
-                paginaAtual === numero ? styles.activePage : ''
-              }`}
-              onClick={() => numero !== '...' && setPaginaAtual(numero)}
-              disabled={numero === '...'}
-            >
-              {numero}
-            </button>
-          ))}
-        </div>
+        {gerarNumerosPaginacao().map((numero, index) => (
+          <button
+            key={index}
+            className={`${styles.paginationNumber} ${
+              paginaAtual === numero ? styles.activePage : ''
+            }`}
+            onClick={() => numero !== '...' && setPaginaAtual(numero)}
+            disabled={numero === '...'}
+          >
+            {numero}
+          </button>
+        ))}
         <button
           className={styles.paginationButton}
           onClick={() =>
-            setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))
+            setPaginaAtual(Math.min(paginaAtual + 1, totalPaginas))
           }
           disabled={paginaAtual === totalPaginas}
         >
@@ -220,6 +249,13 @@ const ClientVisualization = () => {
         onClose={() => setShowDetailsModal(false)}
         title="Detalhes do Cliente"
         data={clienteInfo}
+      />
+
+      <CustomModal
+        show={showModal}
+        onClose={handleCloseModal}
+        title={modalTitle}
+        message={modalMessage}
       />
     </div>
   );

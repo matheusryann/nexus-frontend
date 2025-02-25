@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import styles from '../../css/ClientVisualization.module.css';
 import {
   FaSearch,
@@ -10,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import DetailsModal from '../../Components/DetailsModal';
+import CustomModal from '../../Components/Modal';
 
 const HistoryVisualization = () => {
   const [historicos, setHistoricos] = useState([]);
@@ -20,33 +22,27 @@ const HistoryVisualization = () => {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const historicosPorPagina = 8;
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  // Função para buscar o nome do cliente pelo ID
-  const getClienteNome = (clienteId) => {
-    const cliente = clientes.find((c) => c.id === clienteId);
-    return cliente ? cliente.nome : 'Desconhecido';
-  };
-
-  // Busca os dados do backend
+  // Busca dados do backend
   const fetchData = async () => {
     try {
-      const [historicosResponse, clientesResponse] = await Promise.all([
-        fetch(
+      const [historicosRes, clientesRes] = await Promise.all([
+        axios.get(
           'http://127.0.0.1:8000/api/historicos/historicos-consumo-demanda/',
         ),
-        fetch('http://127.0.0.1:8000/api/clientes/clientes/'),
+        axios.get('http://127.0.0.1:8000/api/clientes/clientes/'),
       ]);
 
-      if (historicosResponse.ok && clientesResponse.ok) {
-        setHistoricos(await historicosResponse.json());
-        setClientes(await clientesResponse.json());
-      } else {
-        console.error('Erro ao buscar dados do backend');
-      }
+      setHistoricos(historicosRes.data);
+      setClientes(clientesRes.data);
     } catch (error) {
-      console.error('Erro ao buscar dados:', error);
+      console.error('Erro ao buscar os dados da API:', error);
+      setErrorMessage('Erro ao carregar dados. Tente novamente.');
     }
   };
 
@@ -54,24 +50,69 @@ const HistoryVisualization = () => {
     fetchData();
   }, []);
 
-  // Filtra os históricos com base no filtro digitado
-  const historicosFiltrados = historicos.filter((historico) => {
+  // Retorna o nome do cliente pelo ID
+  const getClienteNome = (clienteId) => {
+    const cliente = clientes.find((c) => c.id === clienteId);
+    return cliente ? cliente.nome : 'Desconhecido';
+  };
+
+  // Função para deletar histórico
+  const handleDelete = async () => {
+    if (!historicoSelecionado) return;
+    try {
+      await axios.delete(
+        `http://127.0.0.1:8000/api/historicos/historicos-consumo-demanda/${historicoSelecionado.id}/`,
+      );
+
+      setHistoricos((prev) =>
+        prev.filter((historico) => historico.id !== historicoSelecionado.id),
+      );
+      setModalTitle('Sucesso');
+      setModalMessage('Histórico excluído com sucesso.');
+      setHistoricoSelecionado(null);
+    } catch (error) {
+      setModalTitle('Erro');
+      setModalMessage('Erro ao excluir o histórico.');
+      console.error('Erro na exclusão:', error);
+    } finally {
+      setShowModal(true);
+    }
+  };
+
+  // Confirmação de exclusão
+  const confirmDelete = () => {
+    setModalTitle('Confirmar Exclusão');
+    setModalMessage('Tem certeza de que deseja excluir este histórico?');
+    setShowModal(true);
+  };
+
+  // Fecha modal e decide ação
+  const handleCloseModal = (confirm) => {
+    setShowModal(false);
+    if (confirm) {
+      handleDelete();
+    }
+  };
+
+  // Filtro e Paginação
+  const historicosFiltrados = historicos?.filter((historico) => {
     const termo = filtro.toLowerCase();
     const clienteNome = getClienteNome(historico.cliente)?.toLowerCase();
+
     return (
-      historico.id.toString().includes(termo) || clienteNome.includes(termo)
+      historico?.id?.toString().includes(termo) || clienteNome?.includes(termo)
     );
   });
 
   const totalPaginas = Math.ceil(
     historicosFiltrados.length / historicosPorPagina,
   );
+  const inicio = (paginaAtual - 1) * historicosPorPagina;
   const historicosPaginados = historicosFiltrados.slice(
-    (paginaAtual - 1) * historicosPorPagina,
-    paginaAtual * historicosPorPagina,
+    inicio,
+    inicio + historicosPorPagina,
   );
 
-  // Lógica para gerar números de paginação com reticências
   const gerarNumerosPaginacao = () => {
     const numeros = [];
     if (totalPaginas <= 7) {
@@ -92,33 +133,10 @@ const HistoryVisualization = () => {
     return numeros;
   };
 
-  // Abre o modal de detalhes
+  // Abre modal de detalhes
   const openHistoricoDetails = (historico) => {
     setHistoricoInfo(historico);
     setShowDetailsModal(true);
-  };
-
-  // Função para excluir histórico
-  const handleDelete = async () => {
-    if (!historicoSelecionado) return;
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/historicos/historicos-consumo-demanda/${historicoSelecionado.id}/`,
-        { method: 'DELETE' },
-      );
-      if (response.ok) {
-        setHistoricos((prev) =>
-          prev.filter((historico) => historico.id !== historicoSelecionado.id),
-        );
-        setHistoricoSelecionado(null);
-      } else {
-        console.error('Erro ao excluir histórico');
-      }
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
-    } finally {
-      setShowConfirmDeleteModal(false);
-    }
   };
 
   return (
@@ -127,6 +145,9 @@ const HistoryVisualization = () => {
       <p className="description">
         Visualize todas as informações dos históricos de consumo e demanda.
       </p>
+
+      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+
       <div className={styles.navigation}>
         <div className={styles.inputWrapper}>
           <FaSearch className={styles.icon} />
@@ -149,11 +170,12 @@ const HistoryVisualization = () => {
         <button
           className={styles.actionButton}
           disabled={!historicoSelecionado}
-          onClick={() => setShowConfirmDeleteModal(true)}
+          onClick={confirmDelete}
         >
           <FaTrash /> Excluir
         </button>
       </div>
+
       <table className={styles.table}>
         <thead>
           <tr>
@@ -179,6 +201,7 @@ const HistoryVisualization = () => {
                   <input
                     type="radio"
                     name="historicoSelecionado"
+                    className={styles.radioButton}
                     checked={historicoSelecionado?.id === historico.id}
                     onChange={() =>
                       setHistoricoSelecionado(
@@ -204,50 +227,12 @@ const HistoryVisualization = () => {
           )}
         </tbody>
       </table>
-      <div className={styles.pagination}>
-        <button
-          className={styles.paginationButton}
-          onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
-          disabled={paginaAtual === 1}
-        >
-          <FaArrowLeft /> Anterior
-        </button>
-        <div className={styles.paginationNumbers}>
-          {gerarNumerosPaginacao().map((numero, index) => (
-            <button
-              key={index}
-              className={`${styles.paginationNumber} ${
-                paginaAtual === numero ? styles.activePage : ''
-              }`}
-              onClick={() => numero !== '...' && setPaginaAtual(numero)}
-              disabled={numero === '...'}
-            >
-              {numero}
-            </button>
-          ))}
-        </div>
-        <button
-          className={styles.paginationButton}
-          onClick={() =>
-            setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))
-          }
-          disabled={paginaAtual === totalPaginas}
-        >
-          Próximo <FaArrowRight />
-        </button>
-      </div>
 
-      <DetailsModal
-        show={showDetailsModal}
-        onClose={() => setShowDetailsModal(false)}
-        title="Detalhes do Histórico"
-        data={historicoInfo}
-      />
-      <DetailsModal
-        show={showConfirmDeleteModal}
-        onClose={(confirm) => confirm && handleDelete()}
-        title="Confirmação de Exclusão"
-        data={{ mensagem: 'Tem certeza de que deseja excluir este histórico?' }}
+      <CustomModal
+        show={showModal}
+        onClose={handleCloseModal}
+        title={modalTitle}
+        message={modalMessage}
       />
     </div>
   );

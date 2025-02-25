@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import styles from '../../css/ClientVisualization.module.css';
 import {
   FaSearch,
@@ -10,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import DetailsModal from '../../Components/DetailsModal';
+import CustomModal from '../../Components/Modal';
 
 const EnergyBillVisualization = () => {
   const [contas, setContas] = useState([]);
@@ -20,39 +22,28 @@ const EnergyBillVisualization = () => {
   const [contaInfo, setContaInfo] = useState(null);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const contasPorPagina = 8;
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalTitle, setModalTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  // Função para buscar o nome do cliente ou distribuidora
-  const getEntityName = (id, data) => {
-    const entity = data.find((item) => item.id === id);
-    return entity ? entity.nome : 'Desconhecido';
-  };
-
-  // Busca os dados do backend
+  // Busca dados do backend
   const fetchData = async () => {
     try {
-      const [contasResponse, clientesResponse, distribuidorasResponse] =
-        await Promise.all([
-          fetch('http://127.0.0.1:8000/api/faturas/contas-energia/'),
-          fetch('http://127.0.0.1:8000/api/clientes/clientes/'),
-          fetch('http://127.0.0.1:8000/api/tarifas/distribuidoras/'),
-        ]);
+      const [contasRes, clientesRes, distribuidorasRes] = await Promise.all([
+        axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
+        axios.get('http://127.0.0.1:8000/api/clientes/clientes/'),
+        axios.get('http://127.0.0.1:8000/api/tarifas/distribuidoras/'),
+      ]);
 
-      if (
-        !contasResponse.ok ||
-        !clientesResponse.ok ||
-        !distribuidorasResponse.ok
-      ) {
-        throw new Error('Erro ao buscar dados do backend');
-      }
-
-      setContas(await contasResponse.json());
-      setClientes(await clientesResponse.json());
-      setDistribuidoras(await distribuidorasResponse.json());
+      setContas(contasRes.data);
+      setClientes(clientesRes.data);
+      setDistribuidoras(distribuidorasRes.data);
     } catch (error) {
       console.error('Erro ao buscar os dados da API:', error);
+      setErrorMessage('Erro ao carregar dados. Tente novamente.');
     }
   };
 
@@ -60,13 +51,59 @@ const EnergyBillVisualization = () => {
     fetchData();
   }, []);
 
-  const contasFiltradas = contas.filter((conta) => {
+  // Retorna o nome do cliente ou distribuidora pelo ID
+  const getEntityName = (id, data) => {
+    const entity = data.find((item) => item.id === id);
+    return entity ? entity.nome : 'Desconhecido';
+  };
+
+  // Função para deletar conta
+  const handleDelete = async () => {
+    if (!contaSelecionada) return;
+    try {
+      await axios.delete(
+        `http://127.0.0.1:8000/api/faturas/contas-energia/${contaSelecionada.id}/`,
+      );
+
+      setContas((prev) =>
+        prev.filter((conta) => conta.id !== contaSelecionada.id),
+      );
+      setModalTitle('Sucesso');
+      setModalMessage('Conta excluída com sucesso.');
+      setContaSelecionada(null);
+    } catch (error) {
+      setModalTitle('Erro');
+      setModalMessage('Erro ao excluir a conta.');
+      console.error('Erro na exclusão:', error);
+    } finally {
+      setShowModal(true);
+    }
+  };
+
+  // Confirmação de exclusão
+  const confirmDelete = () => {
+    setModalTitle('Confirmar Exclusão');
+    setModalMessage('Tem certeza de que deseja excluir esta conta?');
+    setShowModal(true);
+  };
+
+  // Fecha modal e decide ação
+  const handleCloseModal = (confirm) => {
+    setShowModal(false);
+    if (confirm) {
+      handleDelete();
+    }
+  };
+
+  // Filtro e Paginação
+  const contasFiltradas = contas?.filter((conta) => {
     const termo = filtro.toLowerCase();
     const clienteNome = getEntityName(conta.cliente, clientes).toLowerCase();
     const distribuidoraNome = getEntityName(
       conta.distribuidora,
       distribuidoras,
     ).toLowerCase();
+
     return (
       conta?.id?.toString().includes(termo) ||
       clienteNome.includes(termo) ||
@@ -81,39 +118,12 @@ const EnergyBillVisualization = () => {
     inicio + contasPorPagina,
   );
 
-  const openContaInfo = (conta) => {
-    setContaInfo(conta);
-    setShowModal(true);
-  };
-
-  const handleDelete = async () => {
-    if (!contaSelecionada) return;
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/faturas/contas-energia/${contaSelecionada.id}/`,
-        { method: 'DELETE' },
-      );
-      if (response.ok) {
-        setContas((prev) =>
-          prev.filter((conta) => conta.id !== contaSelecionada.id),
-        );
-        setContaSelecionada(null);
-        alert('Conta excluída com sucesso!');
-      } else {
-        alert('Erro ao excluir a conta.');
-      }
-    } catch (error) {
-      console.error('Erro ao excluir:', error);
-      alert('Erro ao excluir.');
-    } finally {
-      setShowConfirmDelete(false);
-    }
-  };
-
   const gerarNumerosPaginacao = () => {
     const numeros = [];
     if (totalPaginas <= 7) {
-      for (let i = 1; i <= totalPaginas; i++) numeros.push(i);
+      for (let i = 1; i <= totalPaginas; i++) {
+        numeros.push(i);
+      }
     } else {
       if (paginaAtual > 4) numeros.push(1, '...');
       for (
@@ -128,12 +138,21 @@ const EnergyBillVisualization = () => {
     return numeros;
   };
 
+  // Abre modal de detalhes
+  const openContaDetails = (conta) => {
+    setContaInfo(conta);
+    setShowDetailsModal(true);
+  };
+
   return (
     <div className={styles.content}>
       <h1 className="titulo">Contas de Energia</h1>
       <p className="description">
         Visualize todas as contas de energia cadastradas.
       </p>
+
+      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+
       <div className={styles.navigation}>
         <div className={styles.inputWrapper}>
           <FaSearch className={styles.icon} />
@@ -154,11 +173,12 @@ const EnergyBillVisualization = () => {
         <button
           className={styles.actionButton}
           disabled={!contaSelecionada}
-          onClick={() => setShowConfirmDelete(true)}
+          onClick={confirmDelete}
         >
           <FaTrash /> Excluir
         </button>
       </div>
+
       <table className={styles.table}>
         <thead>
           <tr>
@@ -186,6 +206,7 @@ const EnergyBillVisualization = () => {
                   <input
                     type="radio"
                     name="contaSelecionada"
+                    className={styles.radioButton}
                     checked={contaSelecionada?.id === conta.id}
                     onChange={() =>
                       setContaSelecionada(
@@ -203,7 +224,7 @@ const EnergyBillVisualization = () => {
                 <td>
                   <FaInfoCircle
                     className={styles.iconAction}
-                    onClick={() => openContaInfo(conta)}
+                    onClick={() => openContaDetails(conta)}
                   />
                 </td>
               </tr>
@@ -211,49 +232,12 @@ const EnergyBillVisualization = () => {
           )}
         </tbody>
       </table>
-      <div className={styles.pagination}>
-        <button
-          className={styles.paginationButton}
-          onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
-          disabled={paginaAtual === 1}
-        >
-          <FaArrowLeft /> Anterior
-        </button>
-        {gerarNumerosPaginacao().map((numero, index) => (
-          <button
-            key={index}
-            className={`${styles.paginationNumber} ${
-              paginaAtual === numero ? styles.activePage : ''
-            }`}
-            onClick={() => numero !== '...' && setPaginaAtual(numero)}
-            disabled={numero === '...'}
-          >
-            {numero}
-          </button>
-        ))}
-        <button
-          className={styles.paginationButton}
-          onClick={() =>
-            setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))
-          }
-          disabled={paginaAtual === totalPaginas}
-        >
-          Próximo <FaArrowRight />
-        </button>
-      </div>
-      <DetailsModal
+
+      <CustomModal
         show={showModal}
-        onClose={() => setShowModal(false)}
-        title="Detalhes da Conta de Energia"
-        data={contaInfo}
-      />
-      <DetailsModal
-        show={showConfirmDelete}
-        onClose={(confirm) => confirm && handleDelete()}
-        title="Confirmação"
-        data={{
-          mensagem: 'Tem certeza de que deseja excluir esta conta?',
-        }}
+        onClose={handleCloseModal}
+        title={modalTitle}
+        message={modalMessage}
       />
     </div>
   );
