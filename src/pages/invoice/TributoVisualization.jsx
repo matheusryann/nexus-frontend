@@ -13,6 +13,7 @@ import DetailsModal from '../../Components/DetailsModal';
 
 const TributoVisualization = () => {
   const [tributos, setTributos] = useState([]);
+  const [contasEnergia, setContasEnergia] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [tributoSelecionado, setTributoSelecionado] = useState(null);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -20,13 +21,17 @@ const TributoVisualization = () => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const navigate = useNavigate();
 
+  // Busca os tributos e as contas de energia associadas
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          'http://127.0.0.1:8000/api/faturas/tributos/',
-        );
-        setTributos(response.data);
+        const [tributosResponse, contasResponse] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/faturas/tributos/'),
+          axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
+        ]);
+
+        setTributos(tributosResponse.data);
+        setContasEnergia(contasResponse.data);
       } catch (error) {
         console.error('Erro ao buscar os dados da API:', error);
       }
@@ -34,6 +39,15 @@ const TributoVisualization = () => {
     fetchData();
   }, []);
 
+  // Função para buscar o nome da conta de energia associada
+  const getContaNome = (contaId) => {
+    const conta = contasEnergia.find((item) => item.id === contaId);
+    return conta
+      ? `Conta #${conta.id} - ${conta.cliente_nome || 'Sem Nome'}`
+      : 'Desconhecido';
+  };
+
+  // Filtragem dos tributos com base no input do usuário
   const tributosFiltrados = tributos.filter((tributo) =>
     tributo.tipo.toLowerCase().includes(filtro.toLowerCase()),
   );
@@ -45,6 +59,7 @@ const TributoVisualization = () => {
     inicio + tributosPorPagina,
   );
 
+  // Excluir tributo
   const handleDelete = async () => {
     if (!tributoSelecionado) return;
     try {
@@ -128,11 +143,21 @@ const TributoVisualization = () => {
                   />
                 </td>
                 <td>{tributo.id}</td>
-                <td>{tributo.conta_energia}</td>
+                <td>{getContaNome(tributo.conta_energia)}</td>
                 <td>{tributo.tipo}</td>
-                <td>{tributo.base}</td>
-                <td>{tributo.aliquota}</td>
-                <td>{tributo.valor}</td>
+                <td>
+                  R${' '}
+                  {tributo.base.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })}
+                </td>
+                <td>{tributo.aliquota}%</td>
+                <td>
+                  R${' '}
+                  {tributo.valor.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })}
+                </td>
               </tr>
             ))
           )}
@@ -146,6 +171,9 @@ const TributoVisualization = () => {
         >
           <FaArrowLeft /> Anterior
         </button>
+        <span className={styles.pageNumber}>
+          Página {paginaAtual} de {totalPaginas}
+        </span>
         <button
           className={styles.paginationButton}
           onClick={() =>
