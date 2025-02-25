@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCloudUploadAlt } from 'react-icons/fa'; // Ícone de upload
 import CustomButton from '../../Components/CustomButton';
 import CustomModal from '../../Components/Modal';
@@ -10,9 +10,37 @@ const UploadFatura = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
+  const [clientes, setClientes] = useState([]); // Lista de clientes
+  const [clienteSelecionado, setClienteSelecionado] = useState(''); // Cliente escolhido
 
-  // Referência para o input de arquivos
   const fileInputRef = React.useRef(null);
+
+  // Buscar lista de clientes ao carregar a página
+  useEffect(() => {
+    const fetchClientes = async () => {
+      try {
+        const response = await fetch(
+          'http://127.0.0.1:8000/api/clientes/clientes/',
+        );
+        if (!response.ok) throw new Error('Erro ao buscar clientes');
+
+        const data = await response.json();
+
+        // Verifique se 'data' é realmente um array antes de chamar setClientes
+        if (Array.isArray(data)) {
+          setClientes(data);
+        } else {
+          console.error('Erro: API retornou um formato inesperado', data);
+          setClientes([]); // Evita que clientes.map cause erro
+        }
+      } catch (error) {
+        console.error('Erro ao conectar com o servidor', error);
+        setClientes([]); // Mantém um array vazio para evitar crash
+      }
+    };
+
+    fetchClientes();
+  }, []);
 
   // Manipula seleção de arquivo via clique no input
   const handleFileChange = (event) => {
@@ -53,14 +81,20 @@ const UploadFatura = () => {
       setIsModalOpen(true);
       return;
     }
+    if (!clienteSelecionado) {
+      setModalTitle('Erro');
+      setModalMessage('Selecione um cliente antes de enviar.');
+      setIsModalOpen(true);
+      return;
+    }
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('cliente_id', clienteSelecionado); // Adicionando cliente_id
 
     try {
-      // Enviar para a API
       const response = await fetch(
-        'http://127.0.0.1:8000/api/faturas/upload-fatura/',
+        'http://127.0.0.1:8000/api/historicos/extrair-historico-fatura/',
         {
           method: 'POST',
           body: formData,
@@ -71,9 +105,11 @@ const UploadFatura = () => {
         setModalTitle('Sucesso');
         setModalMessage('Fatura enviada com sucesso!');
         setFile(null);
+        setClienteSelecionado('');
       } else {
+        const errorData = await response.json();
         setModalTitle('Erro');
-        setModalMessage('Falha ao enviar a fatura.');
+        setModalMessage(errorData.detail || 'Falha ao enviar a fatura.');
       }
     } catch (error) {
       setModalTitle('Erro');
@@ -87,9 +123,26 @@ const UploadFatura = () => {
     <div className={styles.container}>
       <h1 className="titulo">Upload de Fatura</h1>
       <p className="description">
-        Selecione ou arraste um arquivo PDF contendo a fatura para processamento
-        e extração dos dados do histórico.
+        Selecione um cliente e faça o upload de um arquivo PDF contendo a fatura
+        para processamento.
       </p>
+
+      <select
+        value={clienteSelecionado}
+        onChange={(e) => setClienteSelecionado(e.target.value)}
+        className={styles.selectBox}
+      >
+        <option value="">Selecione um Cliente</option>
+        {Array.isArray(clientes) && clientes.length > 0 ? (
+          clientes.map((cliente) => (
+            <option key={cliente.id} value={cliente.id}>
+              {cliente.nome}
+            </option>
+          ))
+        ) : (
+          <option disabled>Nenhum cliente encontrado</option>
+        )}
+      </select>
 
       <div
         className={`${styles.uploadBox} ${dragActive ? styles.active : ''}`}
@@ -106,7 +159,6 @@ const UploadFatura = () => {
             : 'Arraste e solte o arquivo aqui ou clique para selecionar'}
         </span>
 
-        {/* Ícone no final da box */}
         <FaCloudUploadAlt
           size={30}
           color="#69ffc8"

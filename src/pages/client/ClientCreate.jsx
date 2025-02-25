@@ -7,7 +7,7 @@ const ClientCreate = () => {
   const [formData, setFormData] = useState({
     nome: '',
     instalacao: '',
-    CNPJ: '',
+    cnpj: '',
     endereco: '',
     cep: '',
     cidade: '',
@@ -56,7 +56,7 @@ const ClientCreate = () => {
       regex: /^.{3,}$/,
       message: 'Nome deve ter pelo menos 3 caracteres.',
     },
-    CNPJ: {
+    cnpj: {
       regex: /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,
       message: 'CNPJ inválido.',
     },
@@ -162,7 +162,7 @@ const ClientCreate = () => {
     setFormData({
       nome: '',
       instalacao: '',
-      CNPJ: '',
+      cnpj: '',
       endereco: '',
       cep: '',
       cidade: '',
@@ -180,9 +180,9 @@ const ClientCreate = () => {
       </p>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h3 className={styles.subtitle}>Dados Pessoais</h3>
-        {['nome', 'instalacao', 'CNPJ'].map((field) => (
+        {['nome', 'instalacao', 'cnpj'].map((field) => (
           <label key={field}>
-            {field === 'CNPJ'
+            {field === 'cnpj'
               ? field
               : field.charAt(0).toUpperCase() + field.slice(1)}
             :

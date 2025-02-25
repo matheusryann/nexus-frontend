@@ -43,3 +43,35 @@
 .hiddenInput {
   display: none;
 }
+
+.selectBox {
+  width: 100%;
+  max-width: max-content;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  margin-bottom: 16px;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s ease-in-out;
+}
+
+/* Efeito ao passar o mouse */
+.selectBox:hover {
+  border-color: #2d5576;
+}
+
+/* Efeito ao focar (quando o usuário clica no select) */
+.selectBox:focus {
+  outline: none;
+  border-color: #2d5576;
+  box-shadow: 0 0 5px rgba(45, 85, 118, 0.5);
+}
+
+/* Estilo para desativar opções */
+.selectBox option:disabled {
+  color: #aaa;
+  font-style: italic;
+}
