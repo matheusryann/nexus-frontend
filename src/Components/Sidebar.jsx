@@ -120,6 +120,11 @@ const Sidebar = () => {
           label: 'Melhor Consumo Anual',
           link: '/simulacao/consumo-anual',
         },
+        {
+          id: 'simulacaoMelhorDemanda',
+          label: 'Melhor Demanda',
+          link: '/simulacao/melhor-demanda',
+        },
       ],
     },
     {

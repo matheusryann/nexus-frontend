@@ -28,7 +28,8 @@ import TributoCreate from './pages/invoice/TributoCreate';
 import TributoVisualization from './pages/invoice/TributoVisualization';
 import TributoEdit from './pages/invoice/TributoEdit';
 import UploadFatura from './pages/history/UploadFatura';
-import SimulacaoConsumoAnual from './pages/simulations/ConsumoAnual'; // Importação da simulação
+import SimulacaoConsumoAnual from './pages/simulations/ConsumoAnual';
+import SimulacaoMelhorDemanda from './pages/simulations/MelhorDemanda';
 
 function App() {
   return (
@@ -108,6 +109,10 @@ function App() {
             <Route
               path="/simulacao/consumo-anual"
               element={<SimulacaoConsumoAnual />}
+            />
+            <Route
+              path="/simulacao/melhor-demanda"
+              element={<SimulacaoMelhorDemanda />}
             />
           </Routes>
           <Footer />

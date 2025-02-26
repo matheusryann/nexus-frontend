@@ -228,6 +228,13 @@ const HistoryVisualization = () => {
         </tbody>
       </table>
 
+      <DetailsModal
+        show={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        title="Detalhes do Histórico"
+        data={historicoInfo}
+      />
+
       <CustomModal
         show={showModal}
         onClose={handleCloseModal}
