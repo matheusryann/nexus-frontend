@@ -130,6 +130,11 @@ const Sidebar = () => {
           label: 'Melhor Modalidade',
           link: '/simulacao/melhor-modalidade',
         },
+        {
+          id: 'simulacaoMelhoriaModalidade',
+          label: 'Melhoria de Modalidade',
+          link: '/simulacao/melhoria-modalidade',
+        },
       ],
     },
     {

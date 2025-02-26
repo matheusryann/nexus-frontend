@@ -12,6 +12,7 @@ const TributoEdit = () => {
   const [errors, setErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
   const [contasEnergia, setContasEnergia] = useState([]);
+  const [clientes, setClientes] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
@@ -19,12 +20,15 @@ const TributoEdit = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [tributoResponse, contasResponse] = await Promise.all([
-          axios.get(`http://127.0.0.1:8000/api/faturas/tributos/${id}/`),
-          axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
-        ]);
+        const [tributoResponse, contasResponse, clientesResponse] =
+          await Promise.all([
+            axios.get(`http://127.0.0.1:8000/api/faturas/tributos/${id}/`),
+            axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
+            axios.get('http://127.0.0.1:8000/api/clientes/clientes/'),
+          ]);
         setFormData(tributoResponse.data);
         setContasEnergia(contasResponse.data);
+        setClientes(clientesResponse.data);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
         setModalTitle('Erro');
@@ -34,6 +38,15 @@ const TributoEdit = () => {
     };
     fetchData();
   }, [id]);
+
+  // Obtém o nome do cliente associado à conta de energia
+  const getClienteNome = (contaId) => {
+    const conta = contasEnergia.find((c) => c.id === contaId);
+    if (!conta || !conta.cliente) return 'Cliente Desconhecido';
+
+    const cliente = clientes.find((cli) => cli.id === conta.cliente);
+    return cliente ? `${conta.id} - ${cliente.nome}` : 'Cliente Desconhecido';
+  };
 
   const validateField = (name, value) => {
     if (!value) return 'Este campo é obrigatório.';
@@ -81,7 +94,7 @@ const TributoEdit = () => {
       );
       setModalTitle('Sucesso');
       setModalMessage('Tributo atualizado com sucesso!');
-      setTimeout(() => navigate('/tributos/visualizar'), 2000);
+      setTimeout(() => navigate('/faturas/visualizar-tributo'), 2000);
     } catch (error) {
       setModalTitle('Erro');
       setModalMessage(
@@ -118,7 +131,7 @@ const TributoEdit = () => {
             <option value="">Selecione</option>
             {contasEnergia.map((conta) => (
               <option key={conta.id} value={conta.id}>
-                {conta.id} - {conta.cliente}
+                {getClienteNome(conta.id)}
               </option>
             ))}
           </select>

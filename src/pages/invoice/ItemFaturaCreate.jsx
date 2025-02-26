@@ -1,55 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import styles from '../../css/ClientCreate.module.css';
 import CustomModal from '../../Components/Modal';
 import CustomButton from '../../Components/CustomButton';
 
-const FORM_FIELDS = [
-  {
-    name: 'conta_energia',
-    label: 'Conta de Energia',
-    type: 'select',
-    required: true,
-  },
-  { name: 'descricao', label: 'Descrição', type: 'text', required: true },
-  { name: 'quantidade', label: 'Quantidade', type: 'number', step: '0.01' },
-  {
-    name: 'preco_unitario',
-    label: 'Preço Unitário',
-    type: 'number',
-    step: '0.000001',
-  },
-  { name: 'tarifa', label: 'Tarifa', type: 'number', step: '0.000001' },
-  { name: 'pis_cofins', label: 'PIS/COFINS', type: 'number', step: '0.01' },
-  { name: 'icms', label: 'ICMS', type: 'number', step: '0.01' },
-  { name: 'valor', label: 'Valor Total', type: 'number', step: '0.01' },
-];
-
 const ItemFaturaCreate = () => {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    conta_energia: '',
+    descricao: '',
+    quantidade: '',
+    preco_unitario: '',
+    tarifa: '',
+    pis_cofins: '',
+    icms: '',
+    valor: '',
+  });
+
   const [errors, setErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
+  const [clientes, setClientes] = useState([]);
   const [contasEnergia, setContasEnergia] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalTitle, setModalTitle] = useState('');
 
+  // Busca os clientes e as contas de energia ao carregar o componente
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          'http://127.0.0.1:8000/api/faturas/contas-energia/',
-        );
-        setContasEnergia(response.data);
+        const [clientesRes, contasRes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/api/clientes/clientes/'),
+          fetch('http://127.0.0.1:8000/api/faturas/contas-energia/'),
+        ]);
+
+        if (clientesRes.ok && contasRes.ok) {
+          setClientes(await clientesRes.json());
+          setContasEnergia(await contasRes.json());
+        } else {
+          console.error('Erro ao buscar dados dos clientes e contas');
+        }
       } catch (error) {
-        console.error('Erro ao buscar dados:', error);
+        console.error('Erro na comunicação com o servidor:', error);
       }
     };
     fetchData();
   }, []);
 
-  const validateField = (name, value, required) => {
-    if (required && !value) return 'Este campo é obrigatório.';
+  // Obtém o nome do cliente associado a uma conta de energia
+  const getClienteNome = (clienteId) => {
+    const cliente = clientes.find((c) => c.id === clienteId);
+    return cliente ? cliente.nome : 'Desconhecido';
+  };
+
+  // Validações dos campos
+  const validateField = (name, value) => {
+    if (name === 'conta_energia' && !value) {
+      return 'A conta de energia é obrigatória.';
+    }
+    if (name === 'descricao' && !value.trim()) {
+      return 'A descrição é obrigatória.';
+    }
     if (
       [
         'quantidade',
@@ -59,49 +68,43 @@ const ItemFaturaCreate = () => {
         'icms',
         'valor',
       ].includes(name) &&
-      value < 0
+      value !== '' &&
+      parseFloat(value) < 0
     ) {
       return 'O valor deve ser positivo.';
     }
     return '';
   };
 
+  // Gerencia alterações nos campos
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
 
     if (touchedFields[name]) {
-      const field = FORM_FIELDS.find((f) => f.name === name);
-      setErrors((prev) => ({
-        ...prev,
-        [name]: validateField(name, value, field.required),
-      }));
+      setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
     }
   };
 
+  // Gerencia o foco perdido nos campos
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    const field = FORM_FIELDS.find((f) => f.name === name);
     setTouchedFields((prev) => ({ ...prev, [name]: true }));
-    setErrors((prev) => ({
-      ...prev,
-      [name]: validateField(name, value, field.required),
-    }));
+    setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
   };
 
+  // Submissão do formulário
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
-    FORM_FIELDS.forEach((field) => {
-      newErrors[field.name] = validateField(
-        field.name,
-        formData[field.name],
-        field.required,
-      );
+    Object.keys(formData).forEach((key) => {
+      newErrors[key] = validateField(key, formData[key]);
     });
-
     setErrors(newErrors);
+    setTouchedFields(
+      Object.keys(formData).reduce((acc, key) => ({ ...acc, [key]: true }), {}),
+    );
 
     if (Object.values(newErrors).some((err) => err)) {
       setModalTitle('Erro de Validação');
@@ -111,27 +114,40 @@ const ItemFaturaCreate = () => {
     }
 
     try {
-      const response = await axios.post(
+      const response = await fetch(
         'http://127.0.0.1:8000/api/faturas/itens-fatura/',
-        formData,
         {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
         },
       );
 
-      setModalTitle('Sucesso');
-      setModalMessage('Item da fatura cadastrado com sucesso!');
-      setFormData({});
-      setTouchedFields({});
+      if (response.ok) {
+        setModalTitle('Sucesso');
+        setModalMessage('Item de fatura cadastrado com sucesso!');
+        setFormData({
+          conta_energia: '',
+          descricao: '',
+          quantidade: '',
+          preco_unitario: '',
+          tarifa: '',
+          pis_cofins: '',
+          icms: '',
+          valor: '',
+        });
+        setTouchedFields({});
+      } else {
+        const errorData = await response.json();
+        setModalTitle('Erro');
+        setModalMessage(
+          `Erro ao enviar os dados: ${JSON.stringify(errorData)}`,
+        );
+      }
     } catch (error) {
+      console.error('Erro na comunicação com o servidor:', error);
       setModalTitle('Erro');
-      setModalMessage(
-        `Erro ao enviar os dados: ${
-          error.response
-            ? JSON.stringify(error.response.data)
-            : 'Erro desconhecido'
-        }`,
-      );
+      setModalMessage('Erro na comunicação com o servidor.');
     } finally {
       setIsModalOpen(true);
     }
@@ -145,38 +161,47 @@ const ItemFaturaCreate = () => {
         detalhamento preciso dos custos.
       </p>
       <form className={styles.form} onSubmit={handleSubmit}>
-        {FORM_FIELDS.map(({ name, label, type, step, required }) => (
+        <label>
+          Conta de Energia:
+          <select
+            name="conta_energia"
+            value={formData.conta_energia}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            className={styles.inputSizeOne}
+          >
+            <option value="">Selecione</option>
+            {contasEnergia.map((conta) => (
+              <option key={conta.id} value={conta.id}>
+                {conta.id} - {getClienteNome(conta.cliente)}
+              </option>
+            ))}
+          </select>
+          {touchedFields.conta_energia && <span>{errors.conta_energia}</span>}
+        </label>
+        {[
+          { label: 'Descrição', name: 'descricao', type: 'text' },
+          { label: 'Quantidade', name: 'quantidade', type: 'number' },
+          { label: 'Preço Unitário', name: 'preco_unitario', type: 'number' },
+          { label: 'Tarifa', name: 'tarifa', type: 'number' },
+          { label: 'PIS/COFINS', name: 'pis_cofins', type: 'number' },
+          { label: 'ICMS', name: 'icms', type: 'number' },
+          { label: 'Valor Total', name: 'valor', type: 'number' },
+        ].map(({ label, name, type }) => (
           <label key={name}>
             {label}:
-            {name === 'conta_energia' ? (
-              <select
-                name={name}
-                value={formData[name] || ''}
-                onChange={handleChange}
-                onBlur={handleBlur}
-              >
-                <option value="">Selecione</option>
-                {contasEnergia.map((conta) => (
-                  <option key={conta.id} value={conta.id}>
-                    {conta.id} - {conta.cliente}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type={type}
-                name={name}
-                value={formData[name] || ''}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                step={step}
-                className={styles.inputSize}
-              />
-            )}
-            {touchedFields[name] && errors[name] && <span>{errors[name]}</span>}
+            <input
+              type={type}
+              name={name}
+              value={formData[name]}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              className={styles.inputSize}
+            />
+            {touchedFields[name] && <span>{errors[name]}</span>}
           </label>
         ))}
-        <CustomButton type="submit">Salvar Item</CustomButton>
+        <CustomButton onClick={handleSubmit}>Salvar Item</CustomButton>
       </form>
       <CustomModal
         show={isModalOpen}

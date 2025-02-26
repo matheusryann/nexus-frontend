@@ -31,6 +31,7 @@ import UploadFatura from './pages/history/UploadFatura';
 import SimulacaoConsumoAnual from './pages/simulations/ConsumoAnual';
 import SimulacaoMelhorDemanda from './pages/simulations/MelhorDemanda';
 import SimulacaoMelhorModalidade from './pages/simulations/MelhorModalidade';
+import SimulacaoMelhoriaModalidade from './pages/simulations/MelhoriaModalidade';
 
 function App() {
   return (
@@ -74,7 +75,10 @@ function App() {
               path="/faturas/visualizar-item-fatura"
               element={<ItemFaturaVisualization />}
             />
-            <Route path="/faturas/editar/:id" element={<ItemFaturaEdit />} />
+            <Route
+              path="/itens-fatura/editar/:id"
+              element={<ItemFaturaEdit />}
+            />
             <Route
               path="/faturas/cadastrar-tributo"
               element={<TributoCreate />}
@@ -83,7 +87,7 @@ function App() {
               path="/faturas/visualizar-tributo"
               element={<TributoVisualization />}
             />
-            <Route path="/faturas/editar/:id" element={<TributoEdit />} />
+            <Route path="/tributos/editar/:id" element={<TributoEdit />} />
             <Route
               path="/tarifas/cadastrar-distribuidora"
               element={<DistribuidoraCreate />}
@@ -118,6 +122,10 @@ function App() {
             <Route
               path="/simulacao/melhor-modalidade"
               element={<SimulacaoMelhorModalidade />}
+            />
+            <Route
+              path="/simulacao/melhoria-modalidade"
+              element={<SimulacaoMelhoriaModalidade />}
             />
           </Routes>
           <Footer />

@@ -16,7 +16,6 @@ import CustomModal from '../../Components/Modal';
 const EnergyBillVisualization = () => {
   const [contas, setContas] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [distribuidoras, setDistribuidoras] = useState([]);
   const [filtro, setFiltro] = useState('');
   const [contaSelecionada, setContaSelecionada] = useState(null);
   const [contaInfo, setContaInfo] = useState(null);
@@ -29,18 +28,15 @@ const EnergyBillVisualization = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
-  // Busca dados do backend
   const fetchData = async () => {
     try {
-      const [contasRes, clientesRes, distribuidorasRes] = await Promise.all([
+      const [contasRes, clientesRes] = await Promise.all([
         axios.get('http://127.0.0.1:8000/api/faturas/contas-energia/'),
         axios.get('http://127.0.0.1:8000/api/clientes/clientes/'),
-        axios.get('http://127.0.0.1:8000/api/tarifas/distribuidoras/'),
       ]);
 
       setContas(contasRes.data);
       setClientes(clientesRes.data);
-      setDistribuidoras(distribuidorasRes.data);
     } catch (error) {
       console.error('Erro ao buscar os dados da API:', error);
       setErrorMessage('Erro ao carregar dados. Tente novamente.');
@@ -51,18 +47,16 @@ const EnergyBillVisualization = () => {
     fetchData();
   }, []);
 
-  // Retorna o nome do cliente ou distribuidora pelo ID
-  const getEntityName = (id, data) => {
-    const entity = data.find((item) => item.id === id);
-    return entity ? entity.nome : 'Desconhecido';
+  const getClienteNome = (clienteId) => {
+    const cliente = clientes.find((c) => c.id === clienteId);
+    return cliente ? cliente.nome : 'Desconhecido';
   };
 
-  // Função para deletar conta
   const handleDelete = async () => {
     if (!contaSelecionada) return;
     try {
       await axios.delete(
-        `http://127.0.0.1:8000/api/faturas/contas-energia/${contaSelecionada.id}/`,
+        `http://127.0.0.1:8000/api/contas/contas-energia/${contaSelecionada.id}/`,
       );
 
       setContas((prev) =>
@@ -80,14 +74,12 @@ const EnergyBillVisualization = () => {
     }
   };
 
-  // Confirmação de exclusão
   const confirmDelete = () => {
     setModalTitle('Confirmar Exclusão');
-    setModalMessage('Tem certeza de que deseja excluir esta conta?');
+    setModalMessage('Tem certeza de que deseja excluir esta conta de energia?');
     setShowModal(true);
   };
 
-  // Fecha modal e decide ação
   const handleCloseModal = (confirm) => {
     setShowModal(false);
     if (confirm) {
@@ -95,19 +87,12 @@ const EnergyBillVisualization = () => {
     }
   };
 
-  // Filtro e Paginação
   const contasFiltradas = contas?.filter((conta) => {
     const termo = filtro.toLowerCase();
-    const clienteNome = getEntityName(conta.cliente, clientes).toLowerCase();
-    const distribuidoraNome = getEntityName(
-      conta.distribuidora,
-      distribuidoras,
-    ).toLowerCase();
+    const clienteNome = getClienteNome(conta.cliente)?.toLowerCase();
 
     return (
-      conta?.id?.toString().includes(termo) ||
-      clienteNome.includes(termo) ||
-      distribuidoraNome.includes(termo)
+      conta?.id?.toString().includes(termo) || clienteNome?.includes(termo)
     );
   });
 
@@ -138,7 +123,6 @@ const EnergyBillVisualization = () => {
     return numeros;
   };
 
-  // Abre modal de detalhes
   const openContaDetails = (conta) => {
     setContaInfo(conta);
     setShowDetailsModal(true);
@@ -148,7 +132,7 @@ const EnergyBillVisualization = () => {
     <div className={styles.content}>
       <h1 className="titulo">Contas de Energia</h1>
       <p className="description">
-        Visualize todas as contas de energia cadastradas.
+        Visualize todas as informações das contas de energia registradas.
       </p>
 
       {errorMessage && <p className={styles.error}>{errorMessage}</p>}
@@ -158,7 +142,7 @@ const EnergyBillVisualization = () => {
           <FaSearch className={styles.icon} />
           <input
             type="text"
-            placeholder="Procure por ID, Cliente ou Distribuidora"
+            placeholder="Procure por ID ou Nome do Cliente"
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
@@ -185,17 +169,15 @@ const EnergyBillVisualization = () => {
             <th></th>
             <th>ID</th>
             <th>Cliente</th>
-            <th>Distribuidora</th>
             <th>Mês</th>
-            <th>Vencimento</th>
-            <th>Total a Pagar</th>
+            <th>Valor</th>
             <th>Detalhes</th>
           </tr>
         </thead>
         <tbody>
           {contasPaginadas.length === 0 ? (
             <tr>
-              <td colSpan="8" className={styles.noData}>
+              <td colSpan="6" className={styles.noData}>
                 Nenhuma conta encontrada.
               </td>
             </tr>
@@ -206,6 +188,7 @@ const EnergyBillVisualization = () => {
                   <input
                     type="radio"
                     name="contaSelecionada"
+                    className={styles.radioButton}
                     checked={contaSelecionada?.id === conta.id}
                     onChange={() =>
                       setContaSelecionada(
@@ -215,11 +198,9 @@ const EnergyBillVisualization = () => {
                   />
                 </td>
                 <td>{conta.id}</td>
-                <td>{getEntityName(conta.cliente, clientes)}</td>
-                <td>{getEntityName(conta.distribuidora, distribuidoras)}</td>
+                <td>{getClienteNome(conta.cliente)}</td>
                 <td>{conta.mes}</td>
-                <td>{conta.vencimento}</td>
-                <td>{conta.total_pagar}</td>
+                <td>{conta.valor || '-'}</td>
                 <td>
                   <FaInfoCircle
                     className={styles.iconAction}
@@ -235,9 +216,10 @@ const EnergyBillVisualization = () => {
       <DetailsModal
         show={showDetailsModal}
         onClose={() => setShowDetailsModal(false)}
-        title="Detalhes da Conta de Energia"
+        title="Detalhes da Conta"
         data={contaInfo}
       />
+
       <CustomModal
         show={showModal}
         onClose={handleCloseModal}
