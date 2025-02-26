@@ -47,7 +47,7 @@ const SimulacaoMelhorModalidade = () => {
   };
 
   const formatarValor = (valor) => {
-    return valor.toLocaleString('pt-BR', {
+    return parseFloat(valor).toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -83,31 +83,20 @@ const SimulacaoMelhorModalidade = () => {
       if (response.status === 200) {
         const mensagem = response.data.mensagem;
 
-        // Expressão regular corrigida para capturar valores corretamente
+        // Captura os valores corretamente usando regex
         const regex =
           /R\$ ([\d,.]+) \(Consumo: R\$ ([\d,.]+), Demanda: R\$ ([\d,.]+)\)/g;
         const valores = [...mensagem.matchAll(regex)];
 
         if (valores.length >= 2) {
-          const verdeTotal = parseFloat(
-            valores[0][1].replace(/\./g, '').replace(',', '.'),
-          );
-          const verdeConsumo = parseFloat(
-            valores[0][2].replace(/\./g, '').replace(',', '.'),
-          );
-          const verdeDemanda = parseFloat(
-            valores[0][3].replace(/\./g, '').replace(',', '.'),
-          );
+          // Extração correta dos valores sem transformar em milhões
+          const verdeTotal = parseFloat(valores[0][1].replace(',', '.'));
+          const verdeConsumo = parseFloat(valores[0][2].replace(',', '.'));
+          const verdeDemanda = parseFloat(valores[0][3].replace(',', '.'));
 
-          const azulTotal = parseFloat(
-            valores[1][1].replace(/\./g, '').replace(',', '.'),
-          );
-          const azulConsumo = parseFloat(
-            valores[1][2].replace(/\./g, '').replace(',', '.'),
-          );
-          const azulDemanda = parseFloat(
-            valores[1][3].replace(/\./g, '').replace(',', '.'),
-          );
+          const azulTotal = parseFloat(valores[1][1].replace(',', '.'));
+          const azulConsumo = parseFloat(valores[1][2].replace(',', '.'));
+          const azulDemanda = parseFloat(valores[1][3].replace(',', '.'));
 
           setResultado(mensagem);
           setMensagemFinal(mensagem.split('. ')[2] || '');
