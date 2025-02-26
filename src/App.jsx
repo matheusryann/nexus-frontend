@@ -30,6 +30,7 @@ import TributoEdit from './pages/invoice/TributoEdit';
 import UploadFatura from './pages/history/UploadFatura';
 import SimulacaoConsumoAnual from './pages/simulations/ConsumoAnual';
 import SimulacaoMelhorDemanda from './pages/simulations/MelhorDemanda';
+import SimulacaoMelhorModalidade from './pages/simulations/MelhorModalidade';
 
 function App() {
   return (
@@ -113,6 +114,10 @@ function App() {
             <Route
               path="/simulacao/melhor-demanda"
               element={<SimulacaoMelhorDemanda />}
+            />
+            <Route
+              path="/simulacao/melhor-modalidade"
+              element={<SimulacaoMelhorModalidade />}
             />
           </Routes>
           <Footer />

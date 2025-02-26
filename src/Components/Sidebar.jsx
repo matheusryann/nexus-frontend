@@ -125,6 +125,11 @@ const Sidebar = () => {
           label: 'Melhor Demanda',
           link: '/simulacao/melhor-demanda',
         },
+        {
+          id: 'simulacaoMelhorModalidade',
+          label: 'Melhor Modalidade',
+          link: '/simulacao/melhor-modalidade',
+        },
       ],
     },
     {

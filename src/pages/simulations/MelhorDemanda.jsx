@@ -77,6 +77,7 @@ const SimulacaoMelhorDemanda = () => {
         const regex = /([\d,.]+) kW - Custo: R\$ ([\d,.]+)/g;
         const valores = [...mensagem.matchAll(regex)];
 
+        // Dentro do bloco que processa a resposta da API no handleSimulacao
         if (valores && valores.length >= 2) {
           // Extração correta dos valores
           const verdeKw = parseFloat(valores[0][1].replace(',', '.'));
@@ -86,10 +87,9 @@ const SimulacaoMelhorDemanda = () => {
           const azulCusto = parseFloat(valores[1][2].replace(',', '.'));
 
           setResultado(mensagem);
-          setDemandaVerde(verdeKw);
-          setCustoVerde(verdeCusto);
-          setDemandaAzul(azulKw);
-          setCustoAzul(azulCusto);
+
+          // Inicia a animação para os valores de demanda e custo
+          animarValores(verdeKw, verdeCusto, azulKw, azulCusto);
         } else {
           setModalTitle('Erro');
           setModalMessage('Não foi possível extrair os valores da resposta.');
